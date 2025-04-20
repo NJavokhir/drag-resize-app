@@ -34,7 +34,6 @@ const graphs = reactive([
   { id: 3, x: 620, y: 0, w: 300, h: 200 }
 ])
 
-// Backup positions in case we need to revert
 const backup = reactive(JSON.parse(JSON.stringify(graphs)))
 const activeId = ref(null)
 
@@ -69,7 +68,6 @@ function onDragging(index, newX, newY) {
   }
 
   if (hasCollision(index, test)) {
-    // Revert to last known safe position
     graphs[index].x = backup[index].x
     graphs[index].y = backup[index].y
   } else {
