@@ -10,14 +10,13 @@
       :minw="100"
       :minh="100"
       :parent="true"
-      :active="activeId === graph.id"
+      :active="true"
       @activated="activeId = graph.id"
       @dragging="(left, top) => onDragging(index, left, top)"
-      @resizing="(_, __, width, height) => onResizing(index, width, height)"
-      @dragstop="() => saveBackup()"
-      @resizestop="() => saveBackup()"
+      @resizing="(left, top, width, height) => onResizing(index, left, top, width, height)"
+      :style="{ border: '2px solid red' }"
     >
-      <div class="graph">Graph {{ index + 1 }}</div>
+      <BarChart v-if="graphCharts[index]" :chart-data="graphCharts[index].data" />
     </vue3-draggable-resizable>
   </div>
 </template>
@@ -26,22 +25,59 @@
 import { reactive, ref } from 'vue'
 import Vue3DraggableResizable from 'vue3-draggable-resizable'
 import 'vue3-draggable-resizable/dist/Vue3DraggableResizable.css'
+import BarChart from './components/BarChart.vue'
 
 const gap = 10
+
 const graphs = reactive([
   { id: 1, x: 0, y: 0, w: 300, h: 200 },
   { id: 2, x: 310, y: 0, w: 300, h: 200 },
   { id: 3, x: 620, y: 0, w: 300, h: 200 }
 ])
 
-const backup = reactive(JSON.parse(JSON.stringify(graphs)))
-const activeId = ref(null)
+const graphCharts = [
+  {
+    id: 1,
+    data: {
+      labels: ['A', 'B', 'C', 'D'],
+      datasets: [
+        {
+          label: 'Dataset 1',
+          data: [20, 40, 60, 80],
+          backgroundColor: '#42a5f5'
+        }
+      ]
+    }
+  },
+  {
+    id: 2,
+    data: {
+      labels: ['W', 'X', 'Y', 'Z'],
+      datasets: [
+        {
+          label: 'Dataset 2',
+          data: [50, 30, 70, 20],
+          backgroundColor: '#66bb6a'
+        }
+      ]
+    }
+  },
+  {
+    id: 3,
+    data: {
+      labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+      datasets: [
+        {
+          label: 'Dataset 3',
+          data: [15, 25, 35, 45],
+          backgroundColor: '#ffa726'
+        }
+      ]
+    }
+  }
+]
 
-function saveBackup() {
-  graphs.forEach((g, i) => {
-    backup[i] = { ...g }
-  })
-}
+const activeId = ref(null)
 
 function isOverlapping(a, b) {
   return !(
@@ -60,34 +96,30 @@ function hasCollision(currentIndex, testRect) {
 }
 
 function onDragging(index, newX, newY) {
-  const test = {
+  const testRect = {
     x: newX,
     y: newY,
     w: graphs[index].w,
     h: graphs[index].h
   }
 
-  if (hasCollision(index, test)) {
-    graphs[index].x = backup[index].x
-    graphs[index].y = backup[index].y
-  } else {
+  if (!hasCollision(index, testRect)) {
     graphs[index].x = newX
     graphs[index].y = newY
   }
 }
 
-function onResizing(index, newW, newH) {
-  const test = {
-    x: graphs[index].x,
-    y: graphs[index].y,
+function onResizing(index, newX, newY, newW, newH) {
+  const testRect = {
+    x: newX,
+    y: newY,
     w: newW,
     h: newH
   }
 
-  if (hasCollision(index, test)) {
-    graphs[index].w = backup[index].w
-    graphs[index].h = backup[index].h
-  } else {
+  if (!hasCollision(index, testRect)) {
+    graphs[index].x = newX
+    graphs[index].y = newY
     graphs[index].w = newW
     graphs[index].h = newH
   }
@@ -102,14 +134,5 @@ function onResizing(index, newW, newH) {
   background: #f0f0f0;
   margin: 30px auto;
   border: 1px solid #ccc;
-}
-.graph {
-  width: 100%;
-  height: 100%;
-  background: #cce5ff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
 }
 </style>
